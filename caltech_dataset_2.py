@@ -23,7 +23,6 @@ def getIdxfromVal(arr, value):
     return -1
 
 
-
 class Caltech(VisionDataset):
     def __init__(self, root, split='train', transform=None, target_transform=None):
         super(Caltech, self).__init__(root, transform=transform, target_transform=target_transform)
@@ -34,10 +33,13 @@ class Caltech(VisionDataset):
         split_path = './Caltech101/' + split + '.txt'
         img_path = './Caltech101/101_ObjectCategories/'
         with open(split_path) as f:
+            # line = f.readline().strip('\n')
             line = f.read().splitlines()
+            # print(line[0])
             self.data = np.array(line)  # 初始化
             imgs = np.array(line).astype(Image.Image)  # 只是为了初始化
             labels = np.zeros(self.data.shape).astype(np.str)  # 初始化 保存了小写字符串的label
+        # print(len(self.data))
 
         for i in range(len(self.data)):  # 6096条数据
             # print(self.data[i])
@@ -45,14 +47,18 @@ class Caltech(VisionDataset):
             labels[i] = self.data[i].split('/')[0].lower()  #所有的label （6096条）
             # print(self.data[i].split('/')[0])
 
-        self.labels_unique = np.unique(labels) # 102条不重复的label\
+        self.labels_unique = np.unique(labels) # 102条不重复的label
+        self.data = list()
+        # print(a.shape)
+        for i in range(len(self.labels_unique)):
+            img_cate = imgs[(labels == self.labels_unique[i])]
+            self.data.append(img_cate)
+            # print(i, '   ', a,'   ',len(a))
+            # self.data = np.vstack((self.data,a))
 
-        for i in range(len(labels)):
-            labels[i] = getIdxfromVal(self.labels_unique,labels[i])
-        labels = labels.astype(np.int)
-        self.data = np.vstack((imgs, labels)).T
+        # self.data应该是102行若干列，行表示第几类，这一类的都在后面堆着
+        # self.data = pd.DataFrame(self.data, columns=['image', 'label'])
 
-        self.data = pd.DataFrame(self.data, columns=['image', 'label'])
 
         '''
         - Here you should implement the logic for reading the splits files and accessing elements
@@ -72,11 +78,12 @@ class Caltech(VisionDataset):
         Returns:
             tuple: (sample, target) where target is class_index of the target class.
         '''
-        # print(self.data)
+        print(self.data)
         # print(
-        image = self.data.iloc[index, 0]
-        label = self.data.iloc[index, 1]
-        # print(image)
+        image = self.data[index].astype(np.uint8)
+        print(image)
+
+        print(1)
 
         # image = self.data.iloc[index, 0].values.astype(np.uint8).reshape((3, 28, 28))
         # label = self.data.iloc[index, 1:]
@@ -88,7 +95,8 @@ class Caltech(VisionDataset):
         if self.transform is not None:
             image = self.transform(image)
 
-        return image, label
+        return image
+        # return image, label
 
     def __len__(self):
         '''
@@ -97,9 +105,3 @@ class Caltech(VisionDataset):
         '''
         length = len(self.data)  # Provide a way to get the length (number of elements) of the dataset
         return length
-
-    def get_imgs_by_cate(self,cateid):
-        # print(self.data)
-        # print(self.data[self.data[:]['label']==cateid])
-        # print('第',cateid,'类数量: ',len(self.data[self.data[:]['label'] == cateid]))
-        return self.data[self.data[:]['label']==cateid]['image']
