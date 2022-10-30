@@ -36,24 +36,46 @@ class Caltech(VisionDataset):
         with open(split_path) as f:
             line = f.read().splitlines()
             self.data = np.array(line)  # 初始化
-            imgs = np.array(line).astype(Image.Image)  # 只是为了初始化
-            labels = np.zeros(self.data.shape).astype(np.str)  # 初始化 保存了小写字符串的label
+            # imgs = np.array(line).astype(Image.Image)  # 只是为了初始化
+            # labels = np.zeros(self.data.shape).astype(np.str)  # 初始化 保存了小写字符串的label
+            imgs = list()
+            # imgs = np.array(dtype=Image.Image)
+            labels = list()
+        idx = 0
+        for e in self.data:
+            t = e.split('/')[0]
+            if t != 'BACKGROUND_Google':
+                # imgs[idx] = pil_loader(img_path + e)  #所有的图
+                # labels[idx] = t.lower()  #所有的label （6096条）
+                imgs.append(pil_loader(img_path + e))
+                # np.append(imgs,pil_loader(img_path + e))
+                labels.append(t.lower())
+                idx+=1
+            else:
+                pass
 
-        for i in range(len(self.data)):  # 6096条数据
-            # print(self.data[i])
-            imgs[i] = pil_loader(img_path + self.data[i])  #所有的图
-            labels[i] = self.data[i].split('/')[0].lower()  #所有的label （6096条）
+        # for i in range(len(self.data)):  # 6096条数据
+        #     # print(self.data[i])
+        #     t = self.data[i].split('/')[0]
+        #     if t != 'BACKGROUND_Google':
+        #         imgs[i] = pil_loader(img_path + self.data[i])  #所有的图
+        #         labels[i] = t.lower()  #所有的label （6096条）
+        #     else:
+        #         pass
             # print(self.data[i].split('/')[0])
-
+#为啥类里面有个0.0
         self.labels_unique = np.unique(labels) # 102条不重复的label\
 
         for i in range(len(labels)):
             labels[i] = getIdxfromVal(self.labels_unique,labels[i])
-        labels = labels.astype(np.int)
+        tmp=np.empty((len(imgs),),Image.Image)
+        for i in range(len(imgs)):
+            tmp[i] = imgs[i]
+        imgs = tmp
+        labels = np.array(labels,dtype=np.int)
         self.data = np.vstack((imgs, labels)).T
-
         self.data = pd.DataFrame(self.data, columns=['image', 'label'])
-
+        # print(self.data)
         '''
         - Here you should implement the logic for reading the splits files and accessing elements
         - If the RAM size allows it, it is faster to store all data in memory
